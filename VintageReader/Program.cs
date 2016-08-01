@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq.Expressions;
 using System.Runtime.InteropServices;
@@ -6,19 +7,43 @@ using System.Runtime.InteropServices;
 using VintageReader.Book;
 using VintageReader.UI;
 using VintageReader.Library;
+using System.Reflection;
+using System.Collections;
+using System.Security.Cryptography;
 
 namespace VintageReader
 {
+
+	class ProgramInfo
+	{
+		public string Title { get; set; }
+		public string Version { get; set; }
+		public string Description { get; set; }
+		public string Copyright { get; set; }
+	}
+
 	class Program
 	{
 
-		public const string NAME = "VintageReader v0.1";
-		public const string SUBTITLE = "An old-style reader for your new books";
-
-		public const string COPYRIGHT = "(c) 2016, Noel Garcia Guimeras <garcia.guimeras@gmail.com>";
 		public const string LICENSE = "Released under GNU General Public License";
 
-		public static void ShowFile(string filename)
+		private static ProgramInfo GetSelfInfo()
+		{
+			Assembly assembly = Assembly.GetExecutingAssembly();
+			AssemblyTitleAttribute title = (AssemblyTitleAttribute)assembly.GetCustomAttribute(typeof(AssemblyTitleAttribute));
+			AssemblyVersionAttribute version = (AssemblyVersionAttribute)assembly.GetCustomAttribute(typeof(AssemblyVersionAttribute));
+			AssemblyDescriptionAttribute description = (AssemblyDescriptionAttribute)assembly.GetCustomAttribute(typeof(AssemblyDescriptionAttribute));
+			AssemblyCopyrightAttribute copyright = (AssemblyCopyrightAttribute)assembly.GetCustomAttribute(typeof(AssemblyCopyrightAttribute));
+			return new ProgramInfo
+			{
+				Title = title.Title,
+				Version = version != null ? version.Version : "0.1",
+				Description = description.Description,
+				Copyright = copyright.Copyright
+			};
+		}
+
+		private static void ShowFile(string filename)
 		{
 			ConsoleWindow wnd = new ConsoleWindow("");
 
@@ -48,10 +73,15 @@ namespace VintageReader
 
 		public static void Main(string[] args)
 		{
-			Console.WriteLine(NAME);
-			Console.WriteLine(SUBTITLE);
+			ProgramInfo programInfo = GetSelfInfo();
+			Console.WriteLine(string.Format("{0} v{1}", programInfo.Title, programInfo.Version));
+			Console.WriteLine(programInfo.Description);
+			Console.WriteLine(programInfo.Copyright);
 			Console.WriteLine(LICENSE);
 			Console.WriteLine();
+
+			if (true)
+				return;
 
 			if (args.Length == 0)
 			{

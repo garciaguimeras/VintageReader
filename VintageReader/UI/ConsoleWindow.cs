@@ -356,7 +356,7 @@ namespace VintageReader.UI
 				percent = Math.Round(percent, 1);
 
 				breadcrumbBar.Text = bookInfo.Pages[pageNumber].Chapter;
-				bottomBar.LeftText = Program.NAME;
+				bottomBar.LeftText = "";
 				bottomBar.RightText = string.Format("Page {0} of {1} ({2}%)", pageNumber + 1, bookInfo.Pages.Count, percent);
 				textView.SetLines(bookInfo.Pages[pageNumber].Lines);
 

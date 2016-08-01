@@ -83,6 +83,8 @@ namespace VintageReader.Library
 			XDocument xDoc = new XDocument();
 			xDoc.Add(library);
 
+			if (File.Exists(filename))
+				File.Delete(filename);
 			using (FileStream fs = File.OpenWrite(filename))
 			{
 				xDoc.Save(fs);
