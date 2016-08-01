@@ -16,7 +16,7 @@ namespace VintageReader
 
 	class ProgramInfo
 	{
-		public string Title { get; set; }
+		public string Name { get; set; }
 		public string Version { get; set; }
 		public string Description { get; set; }
 		public string Copyright { get; set; }
@@ -27,17 +27,16 @@ namespace VintageReader
 
 		public const string LICENSE = "Released under GNU General Public License";
 
-		private static ProgramInfo GetSelfInfo()
+		private static ProgramInfo GetAssemblyInfo()
 		{
 			Assembly assembly = Assembly.GetExecutingAssembly();
-			AssemblyTitleAttribute title = (AssemblyTitleAttribute)assembly.GetCustomAttribute(typeof(AssemblyTitleAttribute));
-			AssemblyVersionAttribute version = (AssemblyVersionAttribute)assembly.GetCustomAttribute(typeof(AssemblyVersionAttribute));
+			AssemblyName assemblyName = assembly.GetName();
 			AssemblyDescriptionAttribute description = (AssemblyDescriptionAttribute)assembly.GetCustomAttribute(typeof(AssemblyDescriptionAttribute));
 			AssemblyCopyrightAttribute copyright = (AssemblyCopyrightAttribute)assembly.GetCustomAttribute(typeof(AssemblyCopyrightAttribute));
 			return new ProgramInfo
 			{
-				Title = title.Title,
-				Version = version != null ? version.Version : "0.1",
+				Name = assemblyName.Name,
+				Version = assemblyName.Version.ToString(),
 				Description = description.Description,
 				Copyright = copyright.Copyright
 			};
@@ -73,8 +72,8 @@ namespace VintageReader
 
 		public static void Main(string[] args)
 		{
-			ProgramInfo programInfo = GetSelfInfo();
-			Console.WriteLine(string.Format("{0} v{1}", programInfo.Title, programInfo.Version));
+			ProgramInfo programInfo = GetAssemblyInfo();
+			Console.WriteLine(string.Format("{0} v{1}", programInfo.Name, programInfo.Version));
 			Console.WriteLine(programInfo.Description);
 			Console.WriteLine(programInfo.Copyright);
 			Console.WriteLine(LICENSE);
