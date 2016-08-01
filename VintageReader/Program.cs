@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 
 using VintageReader.Book;
 using VintageReader.UI;
+using VintageReader.Library;
 
 namespace VintageReader
 {
@@ -15,14 +16,28 @@ namespace VintageReader
 
 		public static void ShowFile(string filename)
 		{
-			ConsoleWindow wnd = new ConsoleWindow("Some title for the window");
+			ConsoleWindow wnd = new ConsoleWindow("");
 
-			BookReader reader = new BookReader();
-			BookInfo info = reader.Read(filename);
-			info.LoadFromReader(wnd.BookContent.Metrics.Width, wnd.BookContent.Metrics.Height);
-			// info.LoadFromReader(80, 25);
-			wnd.Execute(info);
+			LibraryManager libraryManager = new LibraryManager();
+			libraryManager.Read();
+
+			BookReader bookReader = new BookReader();
+			BookInfo bookInfo = bookReader.Read(filename);
+			if (bookInfo == null)
+			{
+				Console.WriteLine("File does not seems to have epub format: {0}", filename);
+				return;
+			}	
+
+			LibraryInfo libraryInfo = libraryManager.Find(bookInfo);
+			if (libraryInfo == null)
+				libraryInfo = libraryManager.CreateNew(bookInfo);
+
+			bookInfo.LoadFromReader(wnd.BookContent.Metrics.Width, wnd.BookContent.Metrics.Height);
+			wnd.Show(bookInfo, libraryInfo);
 			wnd.ClearScreen();
+
+			libraryManager.Write();
 		}
 
 		public static void Main(string[] args)

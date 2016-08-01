@@ -13,18 +13,28 @@ namespace VintageReader.Book
 
 		public BookInfo Read(string filename)
 		{
-			epub = new Epub(filename);
-			return new BookInfo(this) { Title = epub.Title[0], Author = epub.Creator[0] };
+			try
+			{
+				epub = new Epub(filename);
+				return new BookInfo(this) { Title = epub.Title[0], Author = epub.Creator[0] };
+			}
+			catch (Exception e)
+			{}
+			return null;
 		}
 
-		private void ReadBookStructure(List<NavPoint> navPoints, BookInfo bookInfo)
+		private void ReadBookStructure(List<NavPoint> navPoints, string chapter, BookInfo bookInfo)
 		{
 			if (navPoints == null || navPoints.Count == 0)
 				return;
 
 			foreach(NavPoint np in navPoints)
 			{
-				List<BookPage> pages = PaginateText(np.ContentData.GetContentAsPlainText(), bookInfo);
+				string currentChapter = np.Title;
+				if (!string.IsNullOrEmpty(chapter))
+					currentChapter = string.Format("{0} / {1}", chapter, currentChapter);
+
+				List<BookPage> pages = PaginateText(np.ContentData.GetContentAsPlainText(), currentChapter, bookInfo);
 
 				IndexItem indexItem = new IndexItem 
 				{
@@ -35,7 +45,7 @@ namespace VintageReader.Book
 				bookInfo.Pages.AddRange(pages);
 				bookInfo.Spine.Index.Add(indexItem);
 
-				ReadBookStructure(np.Children, bookInfo);
+				ReadBookStructure(np.Children, currentChapter, bookInfo);
 			}
 		}
 
@@ -64,7 +74,7 @@ namespace VintageReader.Book
 			return text.Substring(0, i).Trim() + eol;
 		}
 
-		private List<BookPage> PaginateText(string text, BookInfo bookInfo)
+		private List<BookPage> PaginateText(string text, string chapter, BookInfo bookInfo)
 		{
 			List<BookPage> pages = new List<BookPage>();
 
@@ -72,6 +82,7 @@ namespace VintageReader.Book
 			text = text.Replace("\r", "\n");
 				
 			BookPage p = new BookPage();
+			p.Chapter = chapter;
 			int lineNumber = 0;
 			while (!string.IsNullOrEmpty(text))
 			{
@@ -85,6 +96,7 @@ namespace VintageReader.Book
 					pages.Add(p);
 					lineNumber = 0;
 					p = new BookPage();
+					p.Chapter = chapter;
 				}
 			}
 
@@ -96,7 +108,8 @@ namespace VintageReader.Book
 
 		public void AddPages(BookInfo bookInfo)
 		{
-			ReadBookStructure(epub.TOC, bookInfo);
+			bookInfo.Pages = new List<BookPage>();
+			ReadBookStructure(epub.TOC, "", bookInfo);
 		}
 
 	}

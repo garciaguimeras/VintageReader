@@ -6,6 +6,7 @@ namespace VintageReader.Book
 	class BookPage
 	{
 
+		public string Chapter { get; set; }
 		public List<string> Lines { get; set; }
 
 		public BookPage()

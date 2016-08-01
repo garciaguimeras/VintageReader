@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 
 using VintageReader.Book;
+using VintageReader.Library;
 
 namespace VintageReader.UI
 {
@@ -161,10 +162,35 @@ namespace VintageReader.UI
 		public override void Draw()
 		{
 			base.Draw();
-			WriteText(LeftText, Metrics, TextAlign.LEFT);
-			WriteText(RightText, Metrics, TextAlign.RIGHT);
+			WriteText(string.Format(" {0}", LeftText), Metrics, TextAlign.LEFT);
+			WriteText(string.Format("{0} ", RightText), Metrics, TextAlign.RIGHT);
 		}
 
+	}
+
+	class BreadcrumbBar : StatusBar
+	{
+		public string Text { get; set; }
+
+		public BreadcrumbBar(int width) : base(new WindowMetrics { Top = 1, Left = 0, Width = width, Height = 1 })
+		{
+			BackgroundColor = ConsoleColor.Gray;
+			TextColor = ConsoleColor.DarkGray;
+			Text = "";
+		}
+
+		public override void Draw()
+		{
+			base.Draw();
+			string txt = Text;
+			if (txt.Length > Metrics.Width - 2)
+			{
+				int diff = txt.Length - Metrics.Width + 5;
+				txt = string.Format("...{0}", txt.Substring(diff));
+
+			}
+			WriteText(string.Format(" {0}", txt), Metrics, TextAlign.LEFT);
+		}
 	}
 
 	class HelpBar : StatusBar
@@ -175,13 +201,13 @@ namespace VintageReader.UI
 		{
 			BackgroundColor = ConsoleColor.Gray;
 			TextColor = ConsoleColor.DarkGray;
-			Text = "Some help!";
+			Text = "";
 		}
 
 		public override void Draw()
 		{
 			base.Draw();
-			WriteText(Text, Metrics, TextAlign.LEFT);
+			WriteText(string.Format(" {0} ", Text), Metrics, TextAlign.LEFT);
 		}
 
 	}
@@ -233,8 +259,7 @@ namespace VintageReader.UI
 		NONE,
 		QUIT, 
 		NEXT_PAGE,
-		PREV_PAGE,
-		RELOAD
+		PREV_PAGE
 	}
 
 	class ConsoleWindow
@@ -245,13 +270,18 @@ namespace VintageReader.UI
 		public TextView BookContent { get { return textView; } }
 
 		protected TopBar topBar;
+		protected BreadcrumbBar breadcrumbBar;
 		protected BottomBar bottomBar;
 		protected HelpBar helpBar;
 		protected TextView textView;
 
+		protected ConsoleColor OriginalBackgroundColor;
+		protected ConsoleColor OriginalTextColor;
+
 		public ConsoleWindow(string title)
 		{
 			topBar = new TopBar(Width, title);
+			breadcrumbBar = new BreadcrumbBar(Width);
 			bottomBar = new BottomBar(Width, Height);
 			helpBar = new HelpBar(Width, Height);
 			textView = new TextView(new WindowMetrics
@@ -259,14 +289,16 @@ namespace VintageReader.UI
 				Left = 1,
 				Top = 2,
 				Width = Width - 2,
-				Height = Height - 5
+				Height = Height - 4
 			});
+			OriginalBackgroundColor = Console.BackgroundColor;
+			OriginalTextColor = Console.ForegroundColor;
 		}
 
 		public void ClearScreen()
 		{
-			Console.BackgroundColor = ConsoleColor.Black;
-			Console.ForegroundColor = ConsoleColor.Black;
+			Console.BackgroundColor = OriginalBackgroundColor;
+			Console.ForegroundColor = OriginalTextColor;
 			Console.Clear();
 			Console.CursorTop = 0;
 			Console.CursorLeft = 0;
@@ -276,6 +308,7 @@ namespace VintageReader.UI
 		{
 			ClearScreen();
 			topBar.Draw();
+			breadcrumbBar.Draw();
 			textView.Draw();
 			helpBar.Draw();
 			bottomBar.Draw();
@@ -283,6 +316,9 @@ namespace VintageReader.UI
 
 		private BookReaderAction GetNextAction()
 		{
+			Console.CursorLeft = 0;
+			Console.CursorTop = 0;
+
 			ConsoleKeyInfo keyInfo = Console.ReadKey();
 
 			switch (keyInfo.KeyChar)
@@ -298,32 +334,34 @@ namespace VintageReader.UI
 				case 'p':
 				case 'P':
 					return BookReaderAction.PREV_PAGE;
-
-				case 'r':
-				case 'R':
-					return BookReaderAction.RELOAD;
 			}
 
 			return BookReaderAction.NONE;
 		}
 
-		public void Execute(BookInfo bookInfo)
+		public void Show(BookInfo bookInfo, LibraryInfo libraryInfo)
 		{
-			topBar.Title = string.Format("{0} - {1}", bookInfo.Author, bookInfo.Title);
-			helpBar.Text = "q:Quit n:Next p:Prev r:Reload";
+			Console.CursorVisible = false;
 
-			int pageNumber = 0;
+			topBar.Title = string.Format("{0} - {1}", bookInfo.Author, bookInfo.Title);
+			helpBar.Text = "q:Quit n:Next p:Prev";
+
+			double percent = libraryInfo.ReadingPosition;
+			int pageNumber = (int)((double)bookInfo.Pages.Count * percent / 100f);
+
 			BookReaderAction nextAction = BookReaderAction.NONE;
 			while (nextAction != BookReaderAction.QUIT)
 			{
-				int percent = (int)((pageNumber + 1) * 100 / bookInfo.Pages.Count);
+				percent = ((double)(pageNumber + 1) * 100.0 / (double)bookInfo.Pages.Count);
+				percent = Math.Round(percent, 1);
 
+				breadcrumbBar.Text = bookInfo.Pages[pageNumber].Chapter;
 				bottomBar.LeftText = Program.NAME;
 				bottomBar.RightText = string.Format("Page {0} of {1} ({2}%)", pageNumber + 1, bookInfo.Pages.Count, percent);
 				textView.SetLines(bookInfo.Pages[pageNumber].Lines);
 
 				if (bookInfo.Pages[pageNumber].IsBlank())
-					bottomBar.LeftText = "This page was left blank.";
+					bottomBar.LeftText = "This page was left blank or contains only images.";
 
 				Draw();
 
@@ -339,13 +377,12 @@ namespace VintageReader.UI
 						if (pageNumber > 0)
 							pageNumber--;
 						break;
-
-					case BookReaderAction.RELOAD:
-						bookInfo.LoadFromReader(Width, Height);
-						pageNumber = (int)(bookInfo.Pages.Count * percent / 100);
-						break;
 				}
 			}
+
+			Console.CursorVisible = true;
+			libraryInfo.ReadingPosition = percent;
+			libraryInfo.LastReading = DateTime.Now;
 		}
 
 	}
