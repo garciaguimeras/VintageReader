@@ -49,5 +49,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\test.epub" />
+    <None Include="TODO.txt" />
   </ItemGroup>
 </Project>

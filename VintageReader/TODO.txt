@@ -1,0 +1,3 @@
+﻿- Show table of contents
+- Navigate thru the table of contents
+- Process chapters as xml and show text in a best formatted way
