@@ -1,15 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq.Expressions;
-using System.Runtime.InteropServices;
+using System.Reflection;
 
 using VintageReader.Book;
 using VintageReader.UI;
 using VintageReader.Library;
-using System.Reflection;
-using System.Collections;
-using System.Security.Cryptography;
+
 
 namespace VintageReader
 {
@@ -78,9 +74,6 @@ namespace VintageReader
 			Console.WriteLine(programInfo.Copyright);
 			Console.WriteLine(LICENSE);
 			Console.WriteLine();
-
-			if (true)
-				return;
 
 			if (args.Length == 0)
 			{
