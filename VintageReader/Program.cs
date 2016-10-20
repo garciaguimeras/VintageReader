@@ -27,14 +27,14 @@ namespace VintageReader
 		{
 			Assembly assembly = Assembly.GetExecutingAssembly();
 			AssemblyName assemblyName = assembly.GetName();
-			AssemblyDescriptionAttribute description = (AssemblyDescriptionAttribute)assembly.GetCustomAttribute(typeof(AssemblyDescriptionAttribute));
-			AssemblyCopyrightAttribute copyright = (AssemblyCopyrightAttribute)assembly.GetCustomAttribute(typeof(AssemblyCopyrightAttribute));
+			object[] description = assembly.GetCustomAttributes(typeof(AssemblyDescriptionAttribute), false);
+			object[] copyright = assembly.GetCustomAttributes(typeof(AssemblyCopyrightAttribute), false);
 			return new ProgramInfo
 			{
 				Name = assemblyName.Name,
 				Version = assemblyName.Version.ToString(),
-				Description = description.Description,
-				Copyright = copyright.Copyright
+				Description = description.Length > 0 ? (description[0] as AssemblyDescriptionAttribute).Description : "",
+				Copyright = copyright.Length > 0 ? (copyright[0] as AssemblyCopyrightAttribute).Copyright : "",
 			};
 		}
 
